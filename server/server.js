@@ -5,6 +5,7 @@ const socketIO = require('socket.io');
 
 const publicPath = path.join(__dirname, '../public');
 const port = process.env.PORT || 3000;
+const { generateMessage } = require('./utils/message');
 
 const app = express();
 const server = http.createServer(app);
@@ -19,15 +20,15 @@ app.get('/', (req, res) => {
 io.on('connection', socket => {
   console.log('New user connected');
 
-  socket.emit('newMessage', {
-    from: 'test@test.ua',
-    text: 'Hey bruh!',
-    createdAt: null
+  socket.on('createMessage', (message, callback) => {
+    console.log(message);
+    io.emit('newMessage', generateMessage(message.from, message.text));
+    callback('This is from server');
   });
 
-  socket.on('createMessage', newEmail => {
-    console.log(newEmail);
-  });
+  socket.emit('newMessage', generateMessage('Admin', 'Welcome to the chat app'));
+  
+  socket.broadcast.emit('newMessage', generateMessage('Admin', 'New user joined'));
 
   socket.on('disconnect', () => {
     console.log('user disconnected');
